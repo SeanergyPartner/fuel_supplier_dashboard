@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>연료 공급 정보 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #7986cb 0%, #9575cd 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .search-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: white;
+            color: #495057;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #7986cb 0%, #9575cd 100%);
+            color: white;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #7986cb;
+        }
+        
+        .content-section {
+            padding: 30px;
+        }
+        
+        .result-container {
+            margin-top: 20px;
+        }
+        
+        .result-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .result-card:hover {
+            border-color: #7986cb;
+            box-shadow: 0 4px 12px rgba(121, 134, 203, 0.1);
+        }
+        
+        .result-card.highlight {
+            border-color: #7986cb;
+            background: #f5f5fb;
+        }
+        
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .result-content {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 4px;
+            color: #495057;
+        }
+        
+        .tag.available {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .tag.unavailable {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .tag.note {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        tr:hover {
+            background: #f5f5fb;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #7986cb;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            color: #6c757d;
+        }
+        
+        .dropdown-container {
+            position: relative;
+        }
+        
+        .dropdown-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #7986cb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .dropdown-options.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .dropdown-item:hover {
+            background: #f5f5fb;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>연료 공급 정보 시스템</h1>
+            <p>업체별 연료 취급 현황 및 공급망 정보</p>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-tabs">
+                <button class="tab-btn active" data-tab="supplier">공급사 검색</button>
+                <button class="tab-btn" data-tab="fuel">유종 검색</button>
+                <button class="tab-btn" data-tab="refinery">서플라이어 검색</button>
+                <button class="tab-btn" data-tab="port">포트 검색</button>
+            </div>
+            <div class="dropdown-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="공급사명을 입력하거나 선택하세요" autocomplete="off">
+                <div class="dropdown-options" id="dropdownOptions"></div>
+            </div>
+        </div>
+        
+        <div class="content-section">
+            <div class="result-container" id="resultContainer">
+                <div class="no-results">검색어를 입력하여 정보를 확인하세요</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            fuelBySupplier: {
+                'SK Energy': { VLSFO: true, HSFO: false, LSMGO: true, 'MGO(0.5%)': false },
+                'SK ON': { VLSFO: true, HSFO: false, LSMGO: true, 'MGO(0.5%)': false },
+                'SK IPC': { VLSFO: true, HSFO: false, LSMGO: true, 'MGO(0.5%)': false },
+                'GS 남해': { VLSFO: '120CST', HSFO: true, LSMGO: true, 'MGO(0.5%)': true },
+                'GS 서해/남동해': { VLSFO: false, HSFO: true, LSMGO: true, 'MGO(0.5%)': true },
+                'S-OIL': { VLSFO: true, HSFO: false, LSMGO: true, 'MGO(0.5%)': false, note: '200MT 이상만 판매, 여수-동해 커버' },
+                'HD Oil Bank': { VLSFO: true, HSFO: false, LSMGO: true, 'MGO(0.5%)': false },
+                'VITOL': { VLSFO: false, HSFO: false, LSMGO: true, 'MGO(0.5%)': true },
+                '이데미쓰': { VLSFO: true, HSFO: '가끔', LSMGO: true, 'MGO(0.5%)': false },
+                'ROINS': { VLSFO: false, HSFO: false, LSMGO: true, 'MGO(0.5%)': true }
+            },
+            
+            refineryToSupplier: {
+                'S-OIL': { 'PANOCO': true, 'SEA OIL': true, '미네르바': true },
+                'SK Energy': { 'HD Fuels (DLVD)': '영세', 'HD Fuels (EX)': '영세', 'PANOCO': true, '오션링크': true, 'SEA OIL': true, 'PRIME': '영세', '동림': '과세' },
+                'SK ON': { 'PANOCO': true, '오션링크': true, 'SEA OIL': '면세', 'PRIME': true, '동림': true },
+                'SK IPC': {},
+                'GS Caltex (120CST, 여수)': { '옥주급유': 'EX', 'GS 글로벌': 'EX', 'SEA OIL': 'DLVD', '미네르바': 'DLVD' },
+                'GS Caltex (서해/남동해)': { '옥주급유': 'EX', 'GS 글로벌': 'EX', 'SEA OIL': 'DLVD' },
+                'HD Oil Bank': { 'HD Fuels (DLVD)': true, 'HD Fuels (EX)': true, 'PANOCO': true, '오션링크': true, 'SEA OIL': true, '미네르바': true },
+                'VITOL': { '신진': true },
+                '이데미쯔': { 'GS 글로벌': true, 'HD Fuels (EX)': true, '오션링크': true },
+                'ROINS': { 'SEA OIL': true, '신진': true }
+            },
+            
+            portToSupplier: {
+                '인천': ['옥주급유', 'SK IPC', '이데미쯔'],
+                '평택': ['옥주급유', 'PANOCO', 'SEA OIL'],
+                '대산': ['옥주급유'],
+                '여수': ['옥주급유', 'SK Energy', 'SK ON', 'SK IPC', 'GS Caltex(120CST)', 'GS Caltex 서해/남동해'],
+                '울산/온산': ['HD Fuels(D)', 'HD Fuels(EX)', 'PANOCO', '오션링크', 'SEA OIL', 'PRIME', '미네르바', 'ROINS'],
+                '부산': ['HD Fuels(D)', 'HD Fuels(EX)', 'PANOCO', '오션링크', 'SEA OIL', 'PRIME', '미네르바', 'ROINS'],
+                '삼척포': ['SEA OIL'],
+                '광양': ['옥주급유', 'SEA OIL'],
+                '포항': ['SEA OIL', '미네르바'],
+                '진해': ['HD Fuels(D)', 'PRIME', '미네르바'],
+                '마산': ['미네르바']
+            },
+            
+            supplierDetails: {
+                '옥주급유': { ports: ['인천', '평택', '대산', '여수', '광양'], refineries: ['GS Caltex (120CST, 여수)', 'GS Caltex (서해/남동해)'] },
+                'GS 글로벌': { ports: ['여수'], refineries: ['GS Caltex (120CST, 여수)', 'GS Caltex (서해/남동해)', '이데미쓰'] },
+                'HD Fuels (DLVD)': { ports: ['울산/온산', '부산', '진해'], refineries: ['SK Energy', 'HD Oil Bank'], note: 'SK IPC 직접 안 해서 단가 높음' },
+                'HD Fuels (EX)': { ports: ['울산/온산', '부산'], refineries: ['SK Energy', 'HD Oil Bank', '이데미쓰'], note: 'SK IPC 직접 취급 가능' },
+                'PANOCO': { ports: ['평택', '울산/온산', '부산'], refineries: ['S-OIL', 'SK Energy', 'SK ON', 'HD Oil Bank'] },
+                '오션링크': { ports: ['울산/온산', '부산'], refineries: ['SK Energy', 'SK ON', 'HD Oil Bank', '이데미쓰'] },
+                'SEA OIL': { ports: ['평택', '삼척포', '광양', '포항', '울산/온산', '부산'], refineries: ['S-OIL', 'SK Energy', 'SK ON', 'GS Caltex (120CST, 여수)', 'GS Caltex (서해/남동해)', 'HD Oil Bank', 'ROINS'], note: '김준모, 레오킴 직접 접근 가능, 쓰루 방식 가능' },
+                'PRIME': { ports: ['울산/온산', '부산', '진해'], refineries: ['SK Energy', 'SK ON'] },
+                '동림': { ports: [], refineries: ['SK Energy', 'SK ON'] },
+                '미네르바': { ports: ['울산/온산', '부산', '포항', '진해', '마산'], refineries: ['S-OIL', 'HD Oil Bank', 'GS Caltex (120CST, 여수)'] },
+                '신진': { ports: [], refineries: ['VITOL', 'ROINS'] }
+            }
+        };
+
+        let currentTab = 'supplier';
+        const input = document.getElementById('searchInput');
+        const dropdown = document.getElementById('dropdownOptions');
+        
+        // 탭 전환
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = btn.dataset.tab;
+                
+                const placeholders = {
+                    supplier: '공급사명을 입력하거나 선택하세요',
+                    fuel: '유종을 입력하거나 선택하세요',
+                    refinery: '서플라이어를 입력하거나 선택하세요',
+                    port: '포트명을 입력하거나 선택하세요'
+                };
+                input.placeholder = placeholders[currentTab];
+                input.value = '';
+                dropdown.classList.remove('show');
+                showResults('');
+            });
+        });
+
+        // 입력 시 검색
+        input.addEventListener('input', (e) => {
+            const value = e.target.value.toLowerCase();
+            if (value) {
+                filterDropdown(value);
+            } else {
+                showAllOptions();
+            }
+        });
+
+        // 클릭 시 드롭다운 표시
+        input.addEventListener('focus', () => {
+            showAllOptions();
+        });
+
+        // 외부 클릭 시 드롭다운 숨김
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-container')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 드롭다운 옵션 표시
+        function showAllOptions() {
+            let options = [];
+            if (currentTab === 'supplier') {
+                options = Object.keys(data.supplierDetails);
+            } else if (currentTab === 'fuel') {
+                options = ['VLSFO', 'HSFO', 'LSMGO', 'MGO(0.5%)'];
+            } else if (currentTab === 'refinery') {
+                options = Object.keys(data.refineryToSupplier);
+            } else if (currentTab === 'port') {
+                options = Object.keys(data.portToSupplier);
+            }
+            
+            renderDropdown(options);
+        }
+
+        // 드롭다운 필터링
+        function filterDropdown(query) {
+            let options = [];
+            if (currentTab === 'supplier') {
+                options = Object.keys(data.supplierDetails).filter(s => s.toLowerCase().includes(query));
+            } else if (currentTab === 'fuel') {
+                options = ['VLSFO', 'HSFO', 'LSMGO', 'MGO(0.5%)'].filter(f => f.toLowerCase().includes(query));
+            } else if (currentTab === 'refinery') {
+                options = Object.keys(data.refineryToSupplier).filter(r => r.toLowerCase().includes(query));
+            } else if (currentTab === 'port') {
+                options = Object.keys(data.portToSupplier).filter(p => p.toLowerCase().includes(query));
+            }
+            
+            renderDropdown(options);
+            if (options.length > 0) {
+                showResults(query);
+            }
+        }
+
+        // 드롭다운 렌더링
+        function renderDropdown(options) {
+            if (options.length === 0) {
+                dropdown.innerHTML = '<div class="dropdown-item">검색 결과가 없습니다</div>';
+            } else {
+                dropdown.innerHTML = options.map(opt => 
+                    `<div class="dropdown-item" data-value="${opt}">${opt}</div>`
+                ).join('');
+                
+                // 드롭다운 항목 클릭 이벤트
+                dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        input.value = item.dataset.value;
+                        dropdown.classList.remove('show');
+                        showResults(item.dataset.value);
+                    });
+                });
+            }
+            dropdown.classList.add('show');
+        }
+
+        function showResults(query) {
+            const container = document.getElementById('resultContainer');
+            query = query.trim().toLowerCase();
+            
+            if (!query) {
+                container.innerHTML = '<div class="no-results">검색어를 입력하여 정보를 확인하세요</div>';
+                return;
+            }
+
+            let html = '';
+
+            if (currentTab === 'supplier') {
+                const matches = Object.keys(data.supplierDetails).filter(s => s.toLowerCase().includes(query));
+                if (matches.length === 0) {
+                    html = '<div class="no-results">검색 결과가 없습니다</div>';
+                } else {
+                    matches.forEach(supplier => {
+                        const details = data.supplierDetails[supplier];
+                        
+                        // 해당 공급사가 취급하는 유종 찾기
+                        const availableFuels = [];
+                        Object.keys(data.refineryToSupplier).forEach(refinery => {
+                            if (data.refineryToSupplier[refinery][supplier]) {
+                                const refineryFuels = data.fuelBySupplier[refinery] || {};
+                                Object.keys(refineryFuels).forEach(fuel => {
+                                    if (refineryFuels[fuel] && fuel !== 'note' && !availableFuels.includes(fuel)) {
+                                        availableFuels.push(fuel);
+                                    }
+                                });
+                            }
+                        });
+                        
+                        html += `
+                            <div class="result-card highlight">
+                                <div class="result-title">${supplier}</div>
+                                <div class="result-content">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">공급 가능 유종</div>
+                                            <div class="info-value">
+                                                ${availableFuels.length > 0 ? availableFuels.map(f => `<span class="tag available">${f}</span>`).join('') : '<span class="tag unavailable">정보 없음</span>'}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">공급 가능 포트</div>
+                                            <div class="info-value">
+                                                ${details.ports.length > 0 ? details.ports.map(p => `<span class="tag available">${p}</span>`).join('') : '<span class="tag unavailable">정보 없음</span>'}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">연결 서플라이어</div>
+                                            <div class="info-value">
+                                                ${details.refineries.map(r => `<span class="tag">${r}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ${details.note ? `<div style="margin-top: 10px;"><span class="tag note">${details.note}</span></div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } else if (currentTab === 'fuel') {
+                const fuelTypes = ['VLSFO', 'HSFO', 'LSMGO', 'MGO(0.5%)'];
+                const matchedFuel = fuelTypes.find(f => f.toLowerCase().includes(query));
+                
+                if (matchedFuel) {
+                    const refinerySuppliers = Object.keys(data.fuelBySupplier).filter(s => data.fuelBySupplier[s][matchedFuel]);
+                    
+                    // 해당 유종을 취급하는 공급사 찾기
+                    const availableSuppliers = new Set();
+                    refinerySuppliers.forEach(refinery => {
+                        Object.keys(data.refineryToSupplier[refinery] || {}).forEach(supplier => {
+                            availableSuppliers.add(supplier);
+                        });
+                    });
+                    
+                    // 해당 유종이 가능한 포트 찾기
+                    const availablePorts = new Set();
+                    availableSuppliers.forEach(supplier => {
+                        const supplierInfo = data.supplierDetails[supplier];
+                        if (supplierInfo) {
+                            supplierInfo.ports.forEach(port => availablePorts.add(port));
+                        }
+                    });
+                    
+                    html += `
+                        <div class="result-card highlight">
+                            <div class="result-title">${matchedFuel}</div>
+                            <div class="result-content">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="info-label">취급 서플라이어</div>
+                                        <div class="info-value">
+                                            ${refinerySuppliers.map(r => `<span class="tag available">${r}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">공급 가능 공급사</div>
+                                        <div class="info-value">
+                                            ${Array.from(availableSuppliers).map(s => `<span class="tag available">${s}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">공급 가능 포트</div>
+                                        <div class="info-value">
+                                            ${Array.from(availablePorts).length > 0 ? Array.from(availablePorts).map(p => `<span class="tag available">${p}</span>`).join('') : '<span class="tag unavailable">정보 없음</span>'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>서플라이어</th>
+                                            <th>취급 여부</th>
+                                            <th>비고</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${Object.keys(data.fuelBySupplier).map(supplier => {
+                                            const status = data.fuelBySupplier[supplier][matchedFuel];
+                                            return `
+                                                <tr>
+                                                    <td>${supplier}</td>
+                                                    <td>${status === true ? '<span class="tag available">가능</span>' : 
+                                                           status === false ? '<span class="tag unavailable">불가</span>' : 
+                                                           `<span class="tag note">${status}</span>`}</td>
+                                                    <td>${data.fuelBySupplier[supplier].note || '-'}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html = '<div class="no-results">해당 유종을 찾을 수 없습니다</div>';
+                }
+            } else if (currentTab === 'refinery') {
+                const matches = Object.keys(data.refineryToSupplier).filter(r => r.toLowerCase().includes(query));
+                if (matches.length === 0) {
+                    html = '<div class="no-results">검색 결과가 없습니다</div>';
+                } else {
+                    matches.forEach(refinery => {
+                        const suppliers = data.refineryToSupplier[refinery];
+                        const fuels = data.fuelBySupplier[refinery] || {};
+                        
+                        // 해당 서플라이어와 연결된 공급사들이 커버하는 포트 찾기
+                        const availablePorts = new Set();
+                        Object.keys(suppliers).forEach(supplier => {
+                            const supplierInfo = data.supplierDetails[supplier];
+                            if (supplierInfo) {
+                                supplierInfo.ports.forEach(port => availablePorts.add(port));
+                            }
+                        });
+                        
+                        html += `
+                            <div class="result-card highlight">
+                                <div class="result-title">${refinery}</div>
+                                <div class="result-content">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">취급 유종</div>
+                                            <div class="info-value">
+                                                ${Object.keys(fuels).filter(f => f !== 'note' && fuels[f]).map(f => 
+                                                    `<span class="tag available">${f}${fuels[f] !== true ? ` (${fuels[f]})` : ''}</span>`
+                                                ).join('') || '<span class="tag unavailable">정보 없음</span>'}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">연결 공급사</div>
+                                            <div class="info-value">
+                                                ${Object.keys(suppliers).length > 0 ? 
+                                                    Object.entries(suppliers).map(([s, v]) => 
+                                                        `<span class="tag available">${s}${v !== true ? ` (${v})` : ''}</span>`
+                                                    ).join('') : 
+                                                    '<span class="tag unavailable">정보 없음</span>'}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">공급 가능 포트</div>
+                                            <div class="info-value">
+                                                ${Array.from(availablePorts).length > 0 ? Array.from(availablePorts).map(p => `<span class="tag available">${p}</span>`).join('') : '<span class="tag unavailable">정보 없음</span>'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ${fuels.note ? `<div style="margin-top: 10px;"><span class="tag note">${fuels.note}</span></div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } else if (currentTab === 'port') {
+                const matches = Object.keys(data.portToSupplier).filter(p => p.toLowerCase().includes(query));
+                if (matches.length === 0) {
+                    html = '<div class="no-results">검색 결과가 없습니다</div>';
+                } else {
+                    matches.forEach(port => {
+                        const suppliers = data.portToSupplier[port];
+                        
+                        // 해당 포트에서 가능한 서플라이어 찾기
+                        const availableRefineries = new Set();
+                        suppliers.forEach(supplier => {
+                            const supplierInfo = data.supplierDetails[supplier];
+                            if (supplierInfo) {
+                                supplierInfo.refineries.forEach(ref => availableRefineries.add(ref));
+                            }
+                        });
+                        
+                        // 해당 포트에서 가능한 유종 찾기
+                        const availableFuels = new Set();
+                        availableRefineries.forEach(refinery => {
+                            const refineryFuels = data.fuelBySupplier[refinery] || {};
+                            Object.keys(refineryFuels).forEach(fuel => {
+                                if (refineryFuels[fuel] && fuel !== 'note') {
+                                    availableFuels.add(fuel);
+                                }
+                            });
+                        });
+                        
+                        html += `
+                            <div class="result-card highlight">
+                                <div class="result-title">${port} 항</div>
+                                <div class="result-content">
+                                    <div class="info-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">공급 가능 유종</div>
+                                            <div class="info-value">
+                                                ${Array.from(availableFuels).length > 0 ? Array.from(availableFuels).map(f => `<span class="tag available">${f}</span>`).join('') : '<span class="tag unavailable">정보 없음</span>'}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">공급 가능 업체</div>
+                                            <div class="info-value">
+                                                ${suppliers.map(s => `<span class="tag available">${s}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">연결 서플라이어</div>
+                                            <div class="info-value">
+                                                ${Array.from(availableRefineries).map(r => `<span class="tag">${r}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
